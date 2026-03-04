@@ -252,7 +252,7 @@
         const inputs = document.querySelectorAll('.variable-input');
         inputs.forEach(input => {
             const varName = input.dataset.varName;
-            const value = input.value || `{{${varName}}}`;
+            const value = input.value || `{{ '{{' }}${varName}{{ '}}' }}`;
             const regex = new RegExp(`\\{\\{\\s*${varName}\\s*\\}\\}`, 'g');
             finalText = finalText.replace(regex, `<span style="color:var(--accent-color)">${value}</span>`);
         });
@@ -264,7 +264,7 @@
         const inputs = document.querySelectorAll('.variable-input');
         inputs.forEach(input => {
             const varName = input.dataset.varName;
-            const value = input.value || `{{${varName}}}`;
+            const value = input.value || `{{ '{{' }}${varName}{{ '}}' }}`;
             const regex = new RegExp(`\\{\\{\\s*${varName}\\s*\\}\\}`, 'g');
             finalText = finalText.replace(regex, value);
         });
