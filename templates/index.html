@@ -28,8 +28,8 @@
 
         <div class="tags" style="margin-bottom: 1rem;">
             {% for tag in prompt.tags %}
-            {% set color_var = '--tag-' ~ loop.cycle('1', '2', '3', '4', '5') %}
-            <span class="tag" style="background-color: var({{ color_var }});">#{{ tag }}</span>
+            {% set color_idx = loop.cycle('1', '2', '3', '4', '5') %}
+            <span class="tag tag-{{ color_idx }}">#{{ tag }}</span>
             {% endfor %}
             <span class="tag" style="background-color: transparent; border: 1px solid var(--border-color);">📁 {{
                 prompt.folder }}</span>
@@ -360,7 +360,7 @@
                     ${p.content}
                 </div>
                 <div class="tags" style="margin-bottom: 1rem;">
-                    ${p.tags.map(t => `<span class="tag" style="background-color: var(--tag-${Math.floor(Math.random() * 5) + 1});">#${escapeHtml(t)}</span>`).join('')}
+                    ${p.tags.map(t => `<span class="tag tag-${Math.floor(Math.random() * 5) + 1}">#${escapeHtml(t)}</span>`).join('')}
                     <span class="tag" style="background-color: transparent; border: 1px solid var(--border-color);">📁 ${escapeHtml(p.folder)}</span>
                 </div>
                 <div class="card-buttons" style="display: flex; gap: 0.5rem; margin-top: auto;">
