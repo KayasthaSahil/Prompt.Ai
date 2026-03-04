@@ -38,23 +38,25 @@ def serialize_doc(doc):
 def index():
     """Display all prompts."""
     all_prompts = list(prompts_collection.find().sort([("is_favorite", -1), ("created_at", -1)]))
+    serialized_prompts = [serialize_doc(p) for p in all_prompts]
     folders = prompts_collection.distinct("folder")
     folders = [f for f in folders if f and f.strip()]
     if "General" not in folders:
         folders.append("General")
-    return render_template('index.html', prompts=all_prompts, folders=sorted(folders), current_folder="All")
+    return render_template('index.html', prompts=serialized_prompts, folders=sorted(folders), current_folder="All")
 
 @app.route('/folder/<path:folder_name>')
 def by_folder(folder_name):
     """Display prompts by folder."""
     all_prompts = list(prompts_collection.find({"folder": folder_name}).sort([("is_favorite", -1), ("created_at", -1)]))
+    serialized_prompts = [serialize_doc(p) for p in all_prompts]
     folders = prompts_collection.distinct("folder")
     folders = [f for f in folders if f and f.strip()]
     if "General" not in folders:
         folders.append("General")
     if folder_name not in folders:
         folders.append(folder_name)
-    return render_template('index.html', prompts=all_prompts, folders=sorted(folders), current_folder=folder_name)
+    return render_template('index.html', prompts=serialized_prompts, folders=sorted(folders), current_folder=folder_name)
 
 @app.route('/api/search')
 def api_search():
