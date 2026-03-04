@@ -15,7 +15,8 @@
                 <button class="icon-btn favorite-btn" onclick="toggleFavorite('{{ prompt._id }}')" title="Favorite">
                     {% if prompt.is_favorite %}⭐{% else %}☆{% endif %}
                 </button>
-                <button class="icon-btn" onclick='openEditModal({{ prompt | tojson | safe }})' title="Edit">✏️</button>
+                <button class="icon-btn" data-prompt='{{ prompt | tojson | forceescape }}'
+                    onclick="openEditModal(JSON.parse(this.dataset.prompt))" title="Edit">✏️</button>
                 <button class="icon-btn delete-btn" onclick="deletePrompt('{{ prompt._id }}')"
                     title="Delete">🗑️</button>
             </div>
@@ -27,8 +28,8 @@
 
         <div class="tags" style="margin-bottom: 1rem;">
             {% for tag in prompt.tags %}
-            <span class="tag" style="background-color: var(--tag-{{ loop.cycle('1', '2', '3', '4', '5') }});">#{{ tag
-                }}</span>
+            {% set color_var = '--tag-' ~ loop.cycle('1', '2', '3', '4', '5') %}
+            <span class="tag" style="background-color: var({{ color_var }});">#{{ tag }}</span>
             {% endfor %}
             <span class="tag" style="background-color: transparent; border: 1px solid var(--border-color);">📁 {{
                 prompt.folder }}</span>
@@ -351,7 +352,7 @@
                         <button class="icon-btn favorite-btn" onclick="toggleFavorite('${p._id}')" title="Favorite">
                             ${p.is_favorite ? '⭐' : '☆'}
                         </button>
-                        <button class="icon-btn" onclick='openEditModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' title="Edit">✏️</button>
+                        <button class="icon-btn" data-prompt='${JSON.stringify(p).replace(/'/g, "&#39;")}' onclick="openEditModal(JSON.parse(this.dataset.prompt))" title="Edit">✏️</button>
                         <button class="icon-btn delete-btn" onclick="deletePrompt('${p._id}')" title="Delete">🗑️</button>
                     </div>
                 </div>
