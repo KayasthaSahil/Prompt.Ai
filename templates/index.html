@@ -239,23 +239,11 @@
         <div id="variablesContainer" style="display: grid; gap: 1.25rem; margin-bottom: 2rem;">
         </div>
 
-        <div class="live-preview" style="margin-bottom: 2rem;">
-            <label style="display: block; margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.9rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                </svg>
-                Live Preview
-            </label>
-            <div id="livePreviewBox" class="preview-box"></div>
-        </div>
-
         <div
             style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
             <button type="button" onclick="closeModal('injectionModal')" class="btn-cancel">Cancel</button>
-            <button type="button" onclick="finalizeCopy()" class="btn-primary"
-                style="display: flex; align-items: center; gap: 0.5rem;">
+            <button type="button" id="finalizeCopyBtn" onclick="finalizeCopy()" class="btn-primary"
+                style="display: none; align-items: center; gap: 0.5rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
@@ -365,7 +353,7 @@
             input.className = 'form-input variable-input';
             input.dataset.varName = variable;
             input.placeholder = `Enter ${variable.replace(/_/g, ' ')}...`;
-            input.addEventListener('input', updateLivePreview);
+            input.addEventListener('input', checkVariablesFilled);
 
             wrapper.appendChild(label);
             wrapper.appendChild(input);
@@ -373,20 +361,26 @@
         });
 
         document.getElementById('injectionModal').classList.add('active');
-        updateLivePreview();
+        checkVariablesFilled();
         container.querySelector('input').focus();
     }
 
-    function updateLivePreview() {
-        let finalText = currentTemplate;
+    function checkVariablesFilled() {
         const inputs = document.querySelectorAll('.variable-input');
+        const copyBtn = document.getElementById('finalizeCopyBtn');
+
+        let allFilled = true;
         inputs.forEach(input => {
-            const varName = input.dataset.varName;
-            const value = input.value || `{{ '{{' }}${varName}{{ '}}' }}`;
-            const regex = new RegExp(`\\{\\{\\s*${varName}\\s*\\}\\}`, 'g');
-            finalText = finalText.replace(regex, `<span style="color:var(--accent-color)">${value}</span>`);
+            if (!input.value.trim()) {
+                allFilled = false;
+            }
         });
-        document.getElementById('livePreviewBox').innerHTML = finalText.replace(/\n/g, '<br>');
+
+        if (allFilled) {
+            copyBtn.style.display = 'flex';
+        } else {
+            copyBtn.style.display = 'none';
+        }
     }
 
     function finalizeCopy() {
