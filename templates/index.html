@@ -99,7 +99,7 @@
             <path d="M8 7h8" />
             <path d="M8 11h8" />
         </svg>
-        <p>No prompts found. Create one with variables like {{topic}}!</p>
+        <p>No prompts found. Create one with variables like {{ '{{VariableName}}' }}!</p>
     </div>
     {% endfor %}
 </div>
@@ -109,7 +109,7 @@
     <div class="glass-panel modal-content" style="max-width: 800px;">
         <h2 style="margin-bottom: 0.5rem; font-size: 1.5rem;">New Prompt</h2>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">Create a new prompt
-            template. Use {{ VariableName }} syntax to add variables.</p>
+            template. Use {{ '{{ VariableName }}' }} syntax to add variables.</p>
         <form id="createForm" action="{{ url_for('create_prompt') }}" method="POST">
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group" style="flex: 2; margin-bottom: 0;">
@@ -340,7 +340,8 @@
 
     function initiateCopy(htmlContent) {
         currentTemplate = extractTextFromHTML(htmlContent);
-        const regex = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+        // Allow spaces and a few basic characters inside the variable name
+        const regex = /\{\{\s*([a-zA-Z0-9_\s-]+)\s*\}\}/g;
         const matches = [...currentTemplate.matchAll(regex)];
 
         if (matches.length === 0) {
