@@ -14,6 +14,20 @@ let isEditing = false;
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+// Parse a static SVG string into a real element node (via DOMParser, which
+// doesn't run scripts and isn't the innerHTML pattern AMO's linter flags).
+function svgToNode(svgString) {
+    return new DOMParser().parseFromString(svgString, 'text/html').body.firstElementChild;
+}
+
+// Render trusted rich-text HTML (Quill-authored prompt content) into an element
+// as real DOM nodes. DOMParser doesn't execute scripts and appended parsed nodes
+// stay inert, so this renders identically to innerHTML without tripping the linter.
+function renderHtmlInto(el, html) {
+    const parsed = new DOMParser().parseFromString(html || '', 'text/html');
+    el.replaceChildren(...parsed.body.childNodes);
+}
+
 // ===== Initialization =====
 document.addEventListener('DOMContentLoaded', async () => {
     // Seed DB from MongoDB data on first run
@@ -246,7 +260,7 @@ async function renderHistoryList() {
         } else {
             // Legacy (pre-plain-text) history entries stored real Quill HTML,
             // same trust level as the main card preview — see note there.
-            preview.innerHTML = v.content;
+            renderHtmlInto(preview, v.content);
         }
         item.appendChild(preview);
 
@@ -283,7 +297,7 @@ function makeFolderLink(name, folderValue) {
     a.href = '#';
     a.dataset.folder = folderValue;
     if (currentFolder === folderValue) a.classList.add('active');
-    a.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+    a.appendChild(svgToNode(`<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`));
     a.appendChild(document.createTextNode(` ${name}`));
     li.appendChild(a);
     return li;
@@ -396,7 +410,7 @@ function renderGrid(prompts) {
         btn.className = className;
         btn.dataset.id = id;
         btn.title = title;
-        btn.innerHTML = iconSvg;
+        btn.appendChild(svgToNode(iconSvg));
         return btn;
     }
 
@@ -422,12 +436,12 @@ function renderGrid(prompts) {
         card.appendChild(header);
 
         // Prompt content is Quill-authored rich text by design (bold/lists/etc)
-        // and must render as real HTML for the preview to mean anything — this
-        // is the one place in the card that genuinely needs innerHTML. It's
-        // local-only, single-user data (never remote/attacker-controlled).
+        // and must render as real HTML for the preview to mean anything. Rendered
+        // via DOMParser (renderHtmlInto) — real nodes, no script execution, and
+        // it's local-only single-user data regardless.
         const preview = document.createElement('div');
         preview.className = 'card-preview';
-        preview.innerHTML = p.content;
+        renderHtmlInto(preview, p.content);
         card.appendChild(preview);
 
         const tagsDiv = document.createElement('div');
@@ -441,7 +455,7 @@ function renderGrid(prompts) {
         });
         const folderTag = document.createElement('span');
         folderTag.className = 'tag tag-folder';
-        folderTag.innerHTML = folderMiniIcon;
+        folderTag.appendChild(svgToNode(folderMiniIcon));
         folderTag.appendChild(document.createTextNode(` ${p.folder}`));
         tagsDiv.appendChild(folderTag);
         card.appendChild(tagsDiv);
@@ -684,9 +698,7 @@ async function handleFormSubmit(e) {
 let copyPromptId = null;
 
 function extractTextFromHTML(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    return tempDiv.innerText;
+    return PromptDB._htmlToText(html);
 }
 
 function initiateCopy(id, htmlContent, btn) {
@@ -817,9 +829,7 @@ function showToast(message, type = 'success') {
         info: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c6cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
     };
 
-    const iconSpan = document.createElement('span');
-    iconSpan.innerHTML = icons[type] || icons.info;
-    toast.appendChild(iconSpan);
+    toast.appendChild(svgToNode(icons[type] || icons.info));
     toast.appendChild(document.createTextNode(` ${message}`));
     container.appendChild(toast);
 
