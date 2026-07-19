@@ -29,6 +29,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===== Storage Usage =====
 async function renderStorageUsage() {
     const bytes = await PromptDB.getStorageUsage();
+    const section = $('#storageMeterSection');
+
+    if (bytes === null) {
+        // getBytesInUse() unsupported on this browser (older Firefox) — no
+        // reliable number to show, so hide the meter rather than guess.
+        if (section) section.style.display = 'none';
+        return;
+    }
+    if (section) section.style.display = 'block';
+
     const quota = chrome.storage.local.QUOTA_BYTES || (5 * 1024 * 1024);
     const pct = Math.min(100, (bytes / quota) * 100);
 

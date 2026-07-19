@@ -180,8 +180,12 @@ const PromptDB = {
 
   /**
    * Bytes currently used in chrome.storage.local, for the usage indicator.
+   * getBytesInUse() on the local storage area isn't supported on older
+   * Firefox (only landed in storage.local as of Firefox 144) — returns
+   * null when unavailable so the UI can hide the meter instead of erroring.
    */
   async getStorageUsage() {
+    if (typeof chrome.storage.local.getBytesInUse !== 'function') return null;
     return new Promise((resolve) => {
       chrome.storage.local.getBytesInUse(null, (bytes) => resolve(bytes || 0));
     });
