@@ -45,10 +45,11 @@
     }
   }
 
+  // Delegates to storage.js's shared helper (PromptDB is in scope — storage.js
+  // is injected before content.js) so HTML→text conversion lives in one place
+  // and avoids the innerHTML pattern AMO's linter flags.
   function extractText(html) {
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    return div.innerText;
+    return PromptDB._htmlToText(html);
   }
 
   // Track the most recent non-empty text selection on the page. Clicking our

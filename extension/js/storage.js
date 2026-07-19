@@ -139,7 +139,7 @@ const PromptDB = {
     const history = prev.history || [];
     const contentChanged = (title !== undefined && title !== prev.title) || (content !== undefined && content !== prev.content);
     if (contentChanged) {
-      history.push({ title: prev.title, content: this._stripHtml(prev.content), tags: prev.tags, folder: prev.folder, updated_at: prev.updated_at, plain: true });
+      history.push({ title: prev.title, content: this._htmlToText(prev.content), tags: prev.tags, folder: prev.folder, updated_at: prev.updated_at, plain: true });
       if (history.length > 5) history.shift();
     }
 
@@ -170,12 +170,31 @@ const PromptDB = {
   },
 
   /**
-   * Strip HTML markup down to plain text (used for history snapshots).
+   * Convert an HTML string to plain text, keeping a line break between block
+   * elements (Quill wraps each paragraph in <p>, list items in <li>, etc).
+   * Uses DOMParser rather than assigning to element.innerHTML: DOMParser never
+   * runs scripts and never trips static analysers (AMO's linter flags every
+   * innerHTML assignment). Shared by content.js and popup.js too — storage.js
+   * loads first in both the popup and the content script, so PromptDB is in
+   * scope for both.
    */
-  _stripHtml(html) {
-    const div = document.createElement('div');
-    div.innerHTML = html || '';
-    return div.textContent || '';
+  _htmlToText(html) {
+    const body = new DOMParser().parseFromString(html || '', 'text/html').body;
+    const BLOCK = new Set(['P', 'DIV', 'LI', 'PRE', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
+    let out = '';
+    const walk = (node) => {
+      node.childNodes.forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          out += child.nodeValue;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          if (child.tagName === 'BR') { out += '\n'; return; }
+          walk(child);
+          if (BLOCK.has(child.tagName)) out += '\n';
+        }
+      });
+    };
+    walk(body);
+    return out.replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
   },
 
   /**
