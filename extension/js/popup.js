@@ -188,16 +188,18 @@ async function renderQuickAccess() {
     }
 
     section.style.display = 'block';
-    list.innerHTML = mostUsed.map(p =>
-        `<button class="quick-access-item" data-id="${p.id}">${escapeHtml(p.title)}</button>`
-    ).join('');
-
-    list.querySelectorAll('.quick-access-item').forEach(btn => {
+    list.replaceChildren();
+    mostUsed.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-access-item';
+        btn.dataset.id = p.id;
+        btn.textContent = p.title;
         btn.addEventListener('click', async () => {
             const allPrompts = await PromptDB.getAll();
-            const prompt = allPrompts.find(p => p.id === btn.dataset.id);
+            const prompt = allPrompts.find(x => x.id === p.id);
             if (prompt) initiateCopy(prompt.id, prompt.content, btn);
         });
+        list.appendChild(btn);
     });
 }
 
@@ -219,23 +221,48 @@ async function renderHistoryList() {
         return;
     }
 
-    container.innerHTML = history.slice().reverse().map((v, i) => {
+    container.replaceChildren();
+    history.slice().reverse().forEach((v, i) => {
         const versionIndex = history.length - 1 - i; // index into the original (non-reversed) array
-        return `
-      <div class="history-item">
-        <div class="history-meta">
-          <span class="history-title">${escapeHtml(v.title)}</span>
-          <span class="history-date">${new Date(v.updated_at).toLocaleString()}</span>
-        </div>
-        <div class="history-preview">${v.plain ? escapeHtml(v.content) : v.content}</div>
-        ${v.plain ? '<div style="color: var(--text-tertiary); font-size: 0.68rem; margin-bottom: 0.5rem;">Formatting not preserved in history</div>' : ''}
-        <button type="button" class="btn-copy btn-secondary restore-version-btn" data-index="${versionIndex}">Restore this version</button>
-      </div>`;
-    }).join('');
 
-    container.querySelectorAll('.restore-version-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            await PromptDB.restoreVersion(currentPromptId, parseInt(btn.dataset.index, 10));
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        const meta = document.createElement('div');
+        meta.className = 'history-meta';
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'history-title';
+        titleSpan.textContent = v.title;
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'history-date';
+        dateSpan.textContent = new Date(v.updated_at).toLocaleString();
+        meta.append(titleSpan, dateSpan);
+        item.appendChild(meta);
+
+        const preview = document.createElement('div');
+        preview.className = 'history-preview';
+        if (v.plain) {
+            preview.textContent = v.content;
+        } else {
+            // Legacy (pre-plain-text) history entries stored real Quill HTML,
+            // same trust level as the main card preview — see note there.
+            preview.innerHTML = v.content;
+        }
+        item.appendChild(preview);
+
+        if (v.plain) {
+            const note = document.createElement('div');
+            note.style.cssText = 'color: var(--text-tertiary); font-size: 0.68rem; margin-bottom: 0.5rem;';
+            note.textContent = 'Formatting not preserved in history';
+            item.appendChild(note);
+        }
+
+        const restoreBtn = document.createElement('button');
+        restoreBtn.type = 'button';
+        restoreBtn.className = 'btn-copy btn-secondary restore-version-btn';
+        restoreBtn.textContent = 'Restore this version';
+        restoreBtn.addEventListener('click', async () => {
+            await PromptDB.restoreVersion(currentPromptId, versionIndex);
             showToast('Version restored', 'success');
             closeModal('historyModal');
             closeModal('createModal');
@@ -243,23 +270,32 @@ async function renderHistoryList() {
             await renderPrompts();
             await renderStorageUsage();
         });
+        item.appendChild(restoreBtn);
+
+        container.appendChild(item);
     });
 }
 
 // ===== Folder Rendering =====
+function makeFolderLink(name, folderValue) {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#';
+    a.dataset.folder = folderValue;
+    if (currentFolder === folderValue) a.classList.add('active');
+    a.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+    a.appendChild(document.createTextNode(` ${name}`));
+    li.appendChild(a);
+    return li;
+}
+
 async function renderFolders() {
     const folders = await PromptDB.getFolders();
     const folderList = $('#folderList');
 
-    const folderIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
-
-    let html = `<li><a href="#" data-folder="All" class="${currentFolder === 'All' ? 'active' : ''}">${folderIcon} All Prompts</a></li>`;
-
-    folders.forEach(f => {
-        html += `<li><a href="#" data-folder="${escapeHtml(f)}" class="${currentFolder === f ? 'active' : ''}">${folderIcon} ${escapeHtml(f)}</a></li>`;
-    });
-
-    folderList.innerHTML = html;
+    folderList.replaceChildren();
+    folderList.appendChild(makeFolderLink('All Prompts', 'All'));
+    folders.forEach(f => folderList.appendChild(makeFolderLink(f, f)));
 
     // Bind folder clicks
     folderList.querySelectorAll('a').forEach(link => {
@@ -281,14 +317,25 @@ function updateFolderDropdown() {
         const select = $('#promptFolder');
         const currentValue = select.value;
 
-        let html = `<option value="General">General</option>`;
+        select.replaceChildren();
+        const generalOpt = document.createElement('option');
+        generalOpt.value = 'General';
+        generalOpt.textContent = 'General';
+        select.appendChild(generalOpt);
+
         folders.forEach(f => {
             if (f !== 'General') {
-                html += `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`;
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                select.appendChild(opt);
             }
         });
-        html += `<option value="__new__">+ Create New Folder</option>`;
-        select.innerHTML = html;
+
+        const newOpt = document.createElement('option');
+        newOpt.value = '__new__';
+        newOpt.textContent = '+ Create New Folder';
+        select.appendChild(newOpt);
 
         // Restore value if it still exists
         if (currentValue && currentValue !== '__new__') {
@@ -342,39 +389,78 @@ function renderGrid(prompts) {
     const clipIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>`;
     const folderMiniIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
 
-    grid.innerHTML = prompts.map((p, index) => {
-        const tagColors = ['1', '2', '3', '4', '5'];
-        const tagsHtml = (p.tags || []).map((t, i) =>
-            `<span class="tag tag-${tagColors[i % 5]} tag-clickable" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</span>`
-        ).join('');
+    const tagColors = ['1', '2', '3', '4', '5'];
 
-        return `
-      <div class="glass-panel prompt-card" id="prompt-${p.id}" style="animation-delay: ${index * 0.04}s;">
-        <div class="card-header">
-          <div class="card-title">${escapeHtml(p.title)}</div>
-          <div class="card-actions">
-            <button class="icon-btn favorite-btn" data-id="${p.id}" title="Favorite">
-              ${p.is_favorite ? starFilled : starEmpty}
-            </button>
-            <button class="icon-btn edit-btn" data-id="${p.id}" title="Edit">${editIcon}</button>
-            <button class="icon-btn delete-btn" data-id="${p.id}" title="Delete">${deleteIcon}</button>
-          </div>
-        </div>
-        <div class="card-preview">${p.content}</div>
-        <div class="tags">
-          ${tagsHtml}
-          <span class="tag tag-folder">${folderMiniIcon} ${escapeHtml(p.folder)}</span>
-        </div>
-        <div class="card-buttons">
-          <button class="btn-copy magic-copy-btn" data-id="${p.id}" title="Magic Copy">
-            ${sparkleIcon} Magic Copy
-          </button>
-          <button class="btn-copy btn-secondary raw-copy-btn" data-id="${p.id}" title="Raw Copy">
-            ${clipIcon} Copy
-          </button>
-        </div>
-      </div>`;
-    }).join('');
+    function makeIconButton(className, id, title, iconSvg) {
+        const btn = document.createElement('button');
+        btn.className = className;
+        btn.dataset.id = id;
+        btn.title = title;
+        btn.innerHTML = iconSvg;
+        return btn;
+    }
+
+    function buildCard(p, index) {
+        const card = document.createElement('div');
+        card.className = 'glass-panel prompt-card';
+        card.id = `prompt-${p.id}`;
+        card.style.animationDelay = `${index * 0.04}s`;
+
+        const header = document.createElement('div');
+        header.className = 'card-header';
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = p.title;
+        header.appendChild(title);
+
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+        actions.appendChild(makeIconButton('icon-btn favorite-btn', p.id, 'Favorite', p.is_favorite ? starFilled : starEmpty));
+        actions.appendChild(makeIconButton('icon-btn edit-btn', p.id, 'Edit', editIcon));
+        actions.appendChild(makeIconButton('icon-btn delete-btn', p.id, 'Delete', deleteIcon));
+        header.appendChild(actions);
+        card.appendChild(header);
+
+        // Prompt content is Quill-authored rich text by design (bold/lists/etc)
+        // and must render as real HTML for the preview to mean anything — this
+        // is the one place in the card that genuinely needs innerHTML. It's
+        // local-only, single-user data (never remote/attacker-controlled).
+        const preview = document.createElement('div');
+        preview.className = 'card-preview';
+        preview.innerHTML = p.content;
+        card.appendChild(preview);
+
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'tags';
+        (p.tags || []).forEach((t, i) => {
+            const tag = document.createElement('span');
+            tag.className = `tag tag-${tagColors[i % 5]} tag-clickable`;
+            tag.dataset.tag = t;
+            tag.textContent = `#${t}`;
+            tagsDiv.appendChild(tag);
+        });
+        const folderTag = document.createElement('span');
+        folderTag.className = 'tag tag-folder';
+        folderTag.innerHTML = folderMiniIcon;
+        folderTag.appendChild(document.createTextNode(` ${p.folder}`));
+        tagsDiv.appendChild(folderTag);
+        card.appendChild(tagsDiv);
+
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'card-buttons';
+        const magicBtn = makeIconButton('btn-copy magic-copy-btn', p.id, 'Magic Copy', sparkleIcon);
+        magicBtn.appendChild(document.createTextNode(' Magic Copy'));
+        buttonsDiv.appendChild(magicBtn);
+        const rawBtn = makeIconButton('btn-copy btn-secondary raw-copy-btn', p.id, 'Raw Copy', clipIcon);
+        rawBtn.appendChild(document.createTextNode(' Copy'));
+        buttonsDiv.appendChild(rawBtn);
+        card.appendChild(buttonsDiv);
+
+        return card;
+    }
+
+    grid.replaceChildren();
+    prompts.forEach((p, index) => grid.appendChild(buildCard(p, index)));
 
     // Bind card button events
     bindCardEvents();
@@ -731,7 +817,10 @@ function showToast(message, type = 'success') {
         info: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c6cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
     };
 
-    toast.innerHTML = `${icons[type] || icons.info} ${escapeHtml(message)}`;
+    const iconSpan = document.createElement('span');
+    iconSpan.innerHTML = icons[type] || icons.info;
+    toast.appendChild(iconSpan);
+    toast.appendChild(document.createTextNode(` ${message}`));
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -741,15 +830,6 @@ function showToast(message, type = 'success') {
 }
 
 // ===== Utility Functions =====
-function escapeHtml(unsafe) {
-    return (unsafe || '').toString()
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
