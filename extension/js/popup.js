@@ -1,5 +1,5 @@
 /**
- * Prompt.AI — Chrome Extension Popup Controller
+ * PromptDock — Chrome Extension Popup Controller
  * Handles all UI interactions, rendering, and feature logic.
  */
 

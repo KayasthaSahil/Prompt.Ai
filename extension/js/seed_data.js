@@ -1,5 +1,5 @@
 /**
- * Prompt.AI — Seed Data from MongoDB
+ * PromptDock — Starter/Seed Prompts
  * These are the existing prompts from the database, embedded for first-run seeding.
  */
 

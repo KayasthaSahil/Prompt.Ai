@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Prompt.AI — Smart Prompt Manager",
+  "name": "PromptDock — Prompt Manager for Claude & ChatGPT",
   "version": "1.0.0",
-  "description": "A powerful prompt manager with Magic Copy, variable injection, folders, tags, favorites, and import/export — all in your browser.",
+  "description": "A local-first prompt manager that docks your saved prompts right into Claude and ChatGPT. Magic Copy variables, folders, tags, version history — all in your browser.",
   "permissions": ["storage", "clipboardWrite", "unlimitedStorage"],
   "host_permissions": ["https://claude.ai/*", "https://chatgpt.com/*", "https://chat.openai.com/*"],
   "background": {
@@ -11,7 +11,7 @@
   "commands": {
     "toggle-picker": {
       "suggested_key": { "default": "Alt+Shift+P" },
-      "description": "Open the Prompt.AI picker"
+      "description": "Open the PromptDock picker"
     }
   },
   "content_scripts": [

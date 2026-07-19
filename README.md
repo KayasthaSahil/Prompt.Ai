@@ -1,12 +1,12 @@
-# Prompt.AI
+# PromptDock
 
-A local-first prompt manager built specifically for **Claude** and **ChatGPT** — save, organize, and drop your prompts straight into the chat box without ever leaving the page.
+A local-first prompt manager built specifically for **Claude** and **ChatGPT** — save, organize, and dock your prompts straight into the chat box without ever leaving the page.
 
 No account. No cloud. No subscription. Your prompts stay in your browser, on your machine.
 
 ## Why
 
-Most AI prompt managers try to do everything — every AI platform, cloud sync, team libraries, marketplaces. Prompt.AI does one thing well: a fast, keyboard-driven prompt library for the two tools developers actually live in, that never sends your data anywhere.
+Most AI prompt managers try to do everything — every AI platform, cloud sync, team libraries, marketplaces. PromptDock does one thing well: a fast, keyboard-driven prompt library for the two tools developers actually live in, that never sends your data anywhere.
 
 ## Features
 
@@ -35,7 +35,7 @@ That's it — no build step, no dependencies to install.
 ## Using it
 
 - **Popup** — click the toolbar icon to browse, create, edit, and organize prompts.
-- **On any claude.ai or chatgpt.com page** — click the floating ⚡ button (or press `Alt+Shift+P`) to search your prompts and insert one directly into the chat box.
+- **On any claude.ai or chatgpt.com page** — click the floating PromptDock button (or press `Alt+Shift+P`) to search your prompts and insert one directly into the chat box.
 - **Variables** — write `{{Topic}}`, `{{Language}}`, etc. in a prompt's content; you'll be asked to fill them in before it's inserted or copied. A variable named `{{selection}}` is auto-filled from whatever text you last highlighted on the page.
 - **Version history** — open a prompt to edit it, then click **History** to see and restore earlier drafts.
 
@@ -54,7 +54,7 @@ extension/
 
 ## Privacy
 
-Prompt.AI requests only the permissions it needs to function: local storage, clipboard write, and access to claude.ai/chatgpt.com to insert prompts into the composer. There is no analytics, no external network calls, no account system. Your prompt library never leaves your machine.
+PromptDock requests only the permissions it needs to function: local storage, clipboard write, and access to claude.ai/chatgpt.com to insert prompts into the composer. There is no analytics, no external network calls, no account system. Your prompt library never leaves your machine.
 
 ## License
 

@@ -1,5 +1,5 @@
 /**
- * Prompt.AI — Chrome Extension Storage Layer
+ * PromptDock — Chrome Extension Storage Layer
  * Uses chrome.storage.local as the data backend.
  * Each prompt: { id, title, content, tags[], folder, is_favorite, created_at, updated_at }
  */
@@ -39,7 +39,7 @@ const PromptDB = {
             [this.STORAGE_KEY]: seeded,
             [this.SEEDED_KEY]: true
           }, () => {
-            console.log(`[Prompt.AI] Seeded ${seeded.length} prompts from database.`);
+            console.log(`[PromptDock] Seeded ${seeded.length} starter prompts.`);
             resolve(true);
           });
         } else {

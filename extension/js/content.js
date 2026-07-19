@@ -1,5 +1,5 @@
 /**
- * Prompt.AI — Content Script
+ * PromptDock — Content Script
  * Runs on claude.ai / chatgpt.com. Adds a floating trigger that opens a
  * searchable prompt picker and inserts the (variable-filled) result
  * directly into the page's chat composer.
@@ -72,11 +72,21 @@
     #promptai-widget .pai-trigger {
       width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
       background: linear-gradient(135deg, #7c6cff, #6a58f0); color: #fff; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 18px rgba(124,108,255,0.45), 0 1px 2px rgba(0,0,0,0.3); font-size: 20px;
+      box-shadow: 0 4px 18px rgba(124,108,255,0.45), 0 1px 2px rgba(0,0,0,0.3);
       transition: transform 0.16s cubic-bezier(0.4,0,0.2,1), box-shadow 0.16s cubic-bezier(0.4,0,0.2,1);
+      animation: pai-pulse 2.6s ease-in-out infinite;
     }
-    #promptai-widget .pai-trigger:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 24px rgba(124,108,255,0.55); }
+    #promptai-widget .pai-trigger svg { transition: transform 0.18s cubic-bezier(0.4,0,0.2,1); }
+    #promptai-widget .pai-trigger .pai-icon-close { display: none; }
+    #promptai-widget .pai-trigger.pai-active .pai-icon-open { display: none; }
+    #promptai-widget .pai-trigger.pai-active .pai-icon-close { display: block; }
+    #promptai-widget .pai-trigger:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 24px rgba(124,108,255,0.55); animation-play-state: paused; }
     #promptai-widget .pai-trigger:active { transform: translateY(0) scale(0.98); }
+    #promptai-widget .pai-trigger.pai-active { animation: none; box-shadow: 0 4px 18px rgba(124,108,255,0.55), 0 1px 2px rgba(0,0,0,0.3); }
+    @keyframes pai-pulse {
+      0%, 100% { box-shadow: 0 4px 18px rgba(124,108,255,0.45), 0 1px 2px rgba(0,0,0,0.3), 0 0 0 0 rgba(124,108,255,0.4); }
+      50% { box-shadow: 0 4px 18px rgba(124,108,255,0.45), 0 1px 2px rgba(0,0,0,0.3), 0 0 0 8px rgba(124,108,255,0); }
+    }
     #promptai-widget .pai-panel {
       position: absolute; bottom: 58px; right: 0; width: 330px; max-height: 420px;
       background: rgba(15,15,20,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
@@ -124,7 +134,10 @@
   `;
 
   widget.innerHTML = `
-    <button class="pai-trigger" title="Insert a saved prompt">⚡</button>
+    <button class="pai-trigger" title="PromptDock — insert a saved prompt (Alt+Shift+P)">
+      <svg class="pai-icon-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+      <svg class="pai-icon-close" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <div class="pai-panel">
       <div class="pai-search"><input type="text" placeholder="Search prompts..." /></div>
       <div class="pai-list"></div>
@@ -262,12 +275,14 @@
 
   function openPanel() {
     panel.classList.add('pai-open');
+    trigger.classList.add('pai-active');
     loadPrompts().then(() => renderList(''));
     setTimeout(() => searchInput.focus(), 50);
   }
 
   function closePanel() {
     panel.classList.remove('pai-open');
+    trigger.classList.remove('pai-active');
     searchInput.value = '';
   }
 

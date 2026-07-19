@@ -1,5 +1,5 @@
 /**
- * Prompt.AI — Background Service Worker
+ * PromptDock — Background Service Worker
  * chrome.commands (global keyboard shortcuts) only fires here, not in
  * content scripts, so this just relays the shortcut to the active tab.
  */
