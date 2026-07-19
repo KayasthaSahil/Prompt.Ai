@@ -193,12 +193,20 @@
       return;
     }
 
-    list.innerHTML = matches.map(p =>
-      `<div class="pai-item" data-id="${p.id}">${escapeHtml(p.title)}<span class="pai-folder">${escapeHtml(p.folder)}</span></div>`
-    ).join('');
+    list.replaceChildren();
+    matches.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'pai-item';
+      item.dataset.id = p.id;
+      item.appendChild(document.createTextNode(p.title));
 
-    list.querySelectorAll('.pai-item').forEach(el => {
-      el.addEventListener('click', () => selectPrompt(el.dataset.id));
+      const folder = document.createElement('span');
+      folder.className = 'pai-folder';
+      folder.textContent = p.folder;
+      item.appendChild(folder);
+
+      item.addEventListener('click', () => selectPrompt(p.id));
+      list.appendChild(item);
     });
   }
 
@@ -236,15 +244,35 @@
     list.style.display = 'none';
     searchInput.style.display = 'none';
     varsBox.classList.add('pai-open');
-    varsBox.innerHTML = '<div class="pai-back">&larr; Back</div>' +
-      vars.map(v => {
-        const prefill = v.toLowerCase() === 'selection' ? escapeHtml(lastSelection) : '';
-        return `<label>${escapeHtml(v.replace(/_/g, ' '))}<input type="text" data-var="${escapeHtml(v)}" value="${prefill}" /></label>`;
-      }).join('') +
-      '<button class="pai-insert-btn">Insert</button>';
+    varsBox.replaceChildren();
 
-    varsBox.querySelector('.pai-back').addEventListener('click', () => renderList(searchInput.value));
-    varsBox.querySelector('.pai-insert-btn').addEventListener('click', () => {
+    const back = document.createElement('div');
+    back.className = 'pai-back';
+    back.textContent = '← Back';
+    back.addEventListener('click', () => renderList(searchInput.value));
+    varsBox.appendChild(back);
+
+    let firstEmpty = null;
+    vars.forEach(v => {
+      const label = document.createElement('label');
+      label.appendChild(document.createTextNode(v.replace(/_/g, ' ')));
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.dataset.var = v;
+      if (v.toLowerCase() === 'selection') {
+        input.value = lastSelection;
+      } else if (!firstEmpty) {
+        firstEmpty = input;
+      }
+      label.appendChild(input);
+      varsBox.appendChild(label);
+    });
+
+    const insertBtn = document.createElement('button');
+    insertBtn.className = 'pai-insert-btn';
+    insertBtn.textContent = 'Insert';
+    insertBtn.addEventListener('click', () => {
       let finalText = text;
       varsBox.querySelectorAll('input[data-var]').forEach(input => {
         const varName = input.dataset.var;
@@ -253,9 +281,9 @@
       });
       finish(finalText);
     });
+    varsBox.appendChild(insertBtn);
 
-    const firstEmpty = varsBox.querySelector('input[data-var][value=""]') || varsBox.querySelector('input[data-var]');
-    setTimeout(() => firstEmpty?.focus(), 30);
+    setTimeout(() => (firstEmpty || varsBox.querySelector('input[data-var]'))?.focus(), 30);
   }
 
   function finish(text) {
@@ -311,10 +339,4 @@
   document.addEventListener('click', (e) => {
     if (!widget.contains(e.target) && panel.classList.contains('pai-open')) closePanel();
   });
-
-  function escapeHtml(unsafe) {
-    return (unsafe || '').toString()
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-  }
 })();
