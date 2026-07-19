@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PromptDock — Prompt Manager for Claude & ChatGPT",
+  "name": "PromptDock — Claude & ChatGPT Prompts",
   "version": "1.0.0",
   "description": "A local-first prompt manager that docks your saved prompts right into Claude and ChatGPT. Magic Copy variables, folders, tags, version history — all in your browser.",
   "permissions": ["storage", "clipboardWrite", "unlimitedStorage"],
